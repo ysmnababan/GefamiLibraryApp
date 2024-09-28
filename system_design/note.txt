@@ -1,0 +1,9 @@
+List of endpoint:
+
+POST /register
+POST /login
+
+GET /books   -- for admin
+
+POST /borrow/{id}  -- for borrowing book
+PUT /return       -- returning book
