@@ -22,8 +22,8 @@ document.getElementById('registerForm').addEventListener('submit', function(even
 
     // Clear previous error messages
     const errorMessagesDiv = document.getElementById('errorMessages');
-    errorMessagesDiv.style.display = 'none'; // Hide the error messages div initially
-    errorMessagesDiv.innerHTML = ''; // Clear previous messages
+    errorMessagesDiv.style.display = 'none'; 
+    errorMessagesDiv.innerHTML = ''; 
 
     // Send the data to the backend
     fetch('http://localhost:8000/api/v1/register/', {
@@ -36,16 +36,16 @@ document.getElementById('registerForm').addEventListener('submit', function(even
     .then(response => {
         if (!response.ok) {
             return response.json().then(err => {
-                // If the response is not ok, throw an error with the error details
+               
                 throw err; // Throw the error object to be caught in the catch block
             });
         }
-        return response.json(); // If response is ok, return the JSON data
+        return response.json(); 
     })
     .then(data => {
-        // Handle success (redirect to login or another page)
+        
         alert("Registration successful! Redirecting to login page.");
-        window.location.href = 'login.html'; // Redirect to login page
+        window.location.href = 'login.html'; 
     })
     .catch(error => {
         // Handle failure and display error messages
@@ -55,8 +55,8 @@ document.getElementById('registerForm').addEventListener('submit', function(even
         for (const [key, messages] of Object.entries(error)) {
             messages.forEach(message => {
                 const errorItem = document.createElement('div');
-                errorItem.innerText = message; // Set the error message text
-                errorMessagesDiv.appendChild(errorItem); // Append message to the div
+                errorItem.innerText = message; 
+                errorMessagesDiv.appendChild(errorItem); 
             });
         }
 

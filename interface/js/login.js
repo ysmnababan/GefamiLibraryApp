@@ -34,7 +34,6 @@ document.addEventListener('DOMContentLoaded', function() {
             // Handle successful login
             console.log('Login successful:', data);
 
-            // Optionally, save the authentication token (if received) to localStorage
             if (data.token) {
                 localStorage.setItem('authToken', data.token);
                 localStorage.setItem('role', data.role);
