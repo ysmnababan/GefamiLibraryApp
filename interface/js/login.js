@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Optionally, save the authentication token (if received) to localStorage
             if (data.token) {
                 localStorage.setItem('authToken', data.token);
+                localStorage.setItem('role', data.role);
             }
 
             // Redirect to another page, e.g., a dashboard

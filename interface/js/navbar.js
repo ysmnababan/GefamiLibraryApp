@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
         event.preventDefault();
         // Clear token from localStorage
         localStorage.removeItem('authToken');
+        localStorage.removeItem('role');
 
         // Optionally, you can redirect the user to a index page after logout
         window.location.href = 'index.html';
