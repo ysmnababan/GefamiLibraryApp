@@ -7,7 +7,7 @@ from django.utils.translation import gettext_lazy as _  # Use gettext_lazy inste
 
 class User(AbstractUser):
     # Override the username field
-    username = models.CharField(max_length=50, unique=True, blank=False, null=False)
+    username = models.CharField(max_length=50, blank=False, null=False)
     
     # Email field
     email = models.EmailField(_('email address'), unique=True)

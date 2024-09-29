@@ -6,11 +6,26 @@ from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from .models import Book, BorrowedBook
 from .serializers import RegisterSerializer, UserSerializer, BookSerializer, BorrowedBookSerializer
+from datetime import datetime
+from rest_framework.permissions import BasePermission
+from django.utils import timezone
 
 # Registration
-class RegisterView(generics.CreateAPIView):
+# class RegisterView(generics.CreateAPIView):
+#     serializer_class = RegisterSerializer
+#     permission_classes = [AllowAny]
+
+class RegisterView(APIView):
     permission_classes = [AllowAny]
-    serializer_class = RegisterSerializer
+    def post(self, request):
+        serializer = RegisterSerializer(data=request.data)
+        
+        if not serializer.is_valid():
+            print(f"Validation errors: {serializer.errors}")  # Print errors for debugging
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        user = serializer.save()  # This will call the create method in the serializer
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 # Login
 class LoginView(APIView):
@@ -27,9 +42,53 @@ class LoginView(APIView):
 
 # Admin - List all books
 class BookListView(generics.ListAPIView):
-    queryset = Book.objects.all()
     serializer_class = BookSerializer
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Get the query parameters from the URL
+        query_params = self.request.query_params
+        available = query_params.get('available', None)
+        borrowed = query_params.get('borrowed', None)
+        user_borrowed = query_params.get('user_borrowed', None)
+
+        # Base queryset
+        queryset = Book.objects.all()
+
+        # 1. Filter by available books (books that have quantity > 0)
+        if available is not None:
+            queryset = queryset.filter(quantity__gt=0)
+
+        # 2. Filter by borrowed books (books that have been borrowed and not yet returned)
+        if borrowed is not None:
+            borrowed_books = BorrowedBook.objects.filter(actual_return_time__isnull=True)
+            book_ids = borrowed_books.values_list('book_id', flat=True)
+            queryset = queryset.filter(id__in=book_ids)
+
+            # Add deadline status (whether return deadline exceeded or not)
+            for book in queryset:
+                borrowed_instance = borrowed_books.get(book_id=book.id)
+                if borrowed_instance.return_time < timezone.now():
+                    book.deadline_status = 'Overdue'
+                else:
+                    book.deadline_status = 'Within Deadline'
+
+        # 3. Filter by books borrowed by the current user
+        if user_borrowed is not None:
+            if self.request.user.role == 'user':
+                borrowed_books = BorrowedBook.objects.filter(user=self.request.user, actual_return_time__isnull=True)
+                book_ids = borrowed_books.values_list('book_id', flat=True)
+                queryset = queryset.filter(id__in=book_ids)
+            else:
+                raise PermissionError("Only users can view their own borrowed books.")
+
+        return queryset
+
+    def get_serializer_class(self):
+        # If 'borrowed' is present, use the BorrowedBookSerializer to include borrowing details
+        if 'borrowed' in self.request.query_params or 'user_borrowed' in self.request.query_params:
+            return BorrowedBookSerializer
+        return BookSerializer
 
 # Borrow a book
 class BorrowBookView(APIView):
@@ -37,39 +96,67 @@ class BorrowBookView(APIView):
 
     def post(self, request, id):
         try:
+            # Check if the user already has a borrowed book
+            existing_borrowed_book = BorrowedBook.objects.filter(user=request.user, actual_return_time__isnull=True).first()
+            if existing_borrowed_book:
+                return Response({'error': 'You can only borrow one book at a time.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Get the book to borrow
             book = Book.objects.get(id=id)
             if book.quantity < 1:
                 return Response({'error': 'Book not available'}, status=status.HTTP_400_BAD_REQUEST)
 
+            # Parse return_time from the request and validate it
+            return_time_str = request.data.get('return_time')
+            if return_time_str:
+                try:
+                    return_time = datetime.fromisoformat(return_time_str)  # Ensure it is converted to a datetime object
+                except ValueError:
+                    return Response({'error': 'Invalid return time format. Use ISO 8601 format.'}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                return Response({'error': 'Return time is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Update the book's quantity
             book.quantity -= 1
             book.save()
 
+            # Create the BorrowedBook record
             borrowed_book = BorrowedBook.objects.create(
                 user=request.user,
                 book=book,
-                return_time=request.data.get('return_time')
+                return_time=return_time
             )
+
             return Response(BorrowedBookSerializer(borrowed_book).data, status=status.HTTP_201_CREATED)
 
         except Book.DoesNotExist:
             return Response({'error': 'Book not found'}, status=status.HTTP_404_NOT_FOUND)
 
 # Return a book
+class IsUserOnly(BasePermission):
+    """
+    Custom permission to only allow users with 'user' role to access the view.
+    """
+
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and request.user.role == 'user'
+        
 class ReturnBookView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsUserOnly]  # Use the custom permission class
 
     def put(self, request):
-        borrowed_book_id = request.data.get('borrowed_book_id')
         try:
-            borrowed_book = BorrowedBook.objects.get(id=borrowed_book_id, user=request.user, actual_return_time__isnull=True)
-            borrowed_book.actual_return_time = request.data.get('actual_return_time')
+            # Get the user's currently borrowed book
+            borrowed_book = BorrowedBook.objects.get(user=request.user, actual_return_time__isnull=True)
+
+            # Set the actual return time to now
+            borrowed_book.actual_return_time = timezone.now()
             borrowed_book.save()
 
             # Increase the book quantity back
             borrowed_book.book.quantity += 1
             borrowed_book.book.save()
 
-            return Response({'message': 'Book returned successfully'})
+            return Response({'message': 'Book returned successfully'}, status=status.HTTP_200_OK)
         except BorrowedBook.DoesNotExist:
-            return Response({'error': 'Borrow record not found'}, status=status.HTTP_404_NOT_FOUND)
-from django.shortcuts import render
+            return Response({'error': 'No borrowed book found'}, status=status.HTTP_404_NOT_FOUND)

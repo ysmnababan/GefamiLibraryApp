@@ -1,8 +1,10 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import Book, BorrowedBook
+from django.contrib.auth import get_user_model
+from django.utils import timezone
 
-User = User()
+User = get_user_model()
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -30,7 +32,17 @@ class BookSerializer(serializers.ModelSerializer):
         model = Book
         fields = '__all__'
 
+
 class BorrowedBookSerializer(serializers.ModelSerializer):
+    book = serializers.StringRelatedField()
+    deadline_status = serializers.SerializerMethodField()
+
     class Meta:
         model = BorrowedBook
-        fields = '__all__'
+        fields = ['book', 'borrowed_time', 'return_time', 'actual_return_time', 'deadline_status']
+
+    def get_deadline_status(self, obj):
+        # Ensure we compare datetime objects
+        if obj.return_time and obj.return_time < timezone.now():
+            return "Overdue"
+        return "Within Deadline"
