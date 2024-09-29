@@ -1,0 +1,211 @@
+{
+	"info": {
+		"_postman_id": "55630f2d-a1d5-49b5-8703-245c1c18b18b",
+		"name": "GefamiLibraryApp",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "35075337"
+	},
+	"item": [
+		{
+			"name": "register new acc",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"username\":\"bibip\",\r\n    \"email\":\"olan2@example.co\",\r\n    \"password\":\"Bibip123\",\r\n    \"role\":\"user\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/api/v1/register/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"v1",
+						"register",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "login",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"email\":\"hehehe@gmail.com\",\r\n    \"password\":\"olanadmin\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/api/v1/login/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"v1",
+						"login",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "list of books",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Token 18f3c685f4d47fe8df6cbd5200b9fe10debbb5db",
+						"description": "admin",
+						"type": "text",
+						"disabled": true
+					},
+					{
+						"key": "Authorization",
+						"value": "Token 9305fa428b7b48d3411815485985efeed46bb225",
+						"description": "user",
+						"type": "text",
+						"disabled": true
+					},
+					{
+						"key": "Authorization",
+						"value": "Token 9629b523b9fe2b93fa441b5bd9c73a79eb6490fd",
+						"description": "hehehe (user)",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8000/api/v1/books?user_borrowed=1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"v1",
+						"books"
+					],
+					"query": [
+						{
+							"key": "available",
+							"value": "1",
+							"disabled": true
+						},
+						{
+							"key": "borrowed",
+							"value": "1",
+							"disabled": true
+						},
+						{
+							"key": "user_borrowed",
+							"value": "1"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "borrow a book",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Token 9305fa428b7b48d3411815485985efeed46bb225",
+						"type": "text",
+						"disabled": true
+					},
+					{
+						"key": "Authorization",
+						"value": "Token 9629b523b9fe2b93fa441b5bd9c73a79eb6490fd",
+						"description": "hehehe (user)",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"return_time\": \"2024-10-01T15:00:00Z\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/api/v1/borrow/4/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"v1",
+						"borrow",
+						"4",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "return the book",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Token 9305fa428b7b48d3411815485985efeed46bb225",
+						"description": "user",
+						"type": "text",
+						"disabled": true
+					},
+					{
+						"key": "Authorization",
+						"value": "Token 9629b523b9fe2b93fa441b5bd9c73a79eb6490fd",
+						"description": "hehehe (user)",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8000/api/v1/return/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"v1",
+						"return",
+						""
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

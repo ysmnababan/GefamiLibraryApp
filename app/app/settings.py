@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'perpus.apps.PerpusConfig',
     'rest_framework',
     'rest_framework.authtoken',
+    'corsheaders',
 ]
 
 AUTH_USER_MODEL ='perpus.User'
@@ -55,6 +56,7 @@ REST_FRAMEWORK = {
 
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -62,6 +64,12 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+# CORS settings
+CORS_ALLOWED_ORIGINS = [
+    "http://127.0.0.1:5500",  # Allow your frontend origin
+    # You can add more origins here if needed
 ]
 
 ROOT_URLCONF = 'app.urls'

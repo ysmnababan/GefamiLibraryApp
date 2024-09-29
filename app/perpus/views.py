@@ -44,7 +44,13 @@ from .models import Book, BorrowedBook
 from .serializers import BookSerializer, BorrowedBookSerializer
 
 class BookListView(generics.ListAPIView):
-    permission_classes = [IsAuthenticated]
+    def get_permissions(self):
+        # Check if 'available' is in the query parameters
+        if 'available' in self.request.query_params:
+            # Allow anyone to access available books
+            return [AllowAny()]
+        # Require authentication for other queries
+        return [IsAuthenticated()]
     
     def get_queryset(self):
         # Get the query parameters from the URL
