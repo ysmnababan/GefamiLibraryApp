@@ -10,10 +10,7 @@ from datetime import datetime
 from rest_framework.permissions import BasePermission
 from django.utils import timezone
 
-# Registration
-# class RegisterView(generics.CreateAPIView):
-#     serializer_class = RegisterSerializer
-#     permission_classes = [AllowAny]
+
 
 class RegisterView(APIView):
     permission_classes = [AllowAny]
@@ -65,15 +62,14 @@ class BookListView(generics.ListAPIView):
 
         # 2. Filter by borrowed books
         if borrowed is not None:
-            # Fetch borrowed books that have not been returned
+            
             borrowed_books = BorrowedBook.objects.filter(actual_return_time__isnull=True)
-            # Get the ids of the books that are borrowed
+            
             book_ids = borrowed_books.values_list('book_id', flat=True)
             queryset = queryset.filter(id__in=book_ids)
 
-            # If you need to include additional info for each borrowed book,
-            # consider serializing BorrowedBook instances instead
-            return borrowed_books  # Return borrowed_books if you want to show their info directly
+            
+            return borrowed_books  
 
         # 3. Filter by books borrowed by the current user
         if user_borrowed is not None:
@@ -88,9 +84,9 @@ class BookListView(generics.ListAPIView):
         return queryset
 
     def get_serializer_class(self):
-        # If 'borrowed' is present, use the BorrowedBookSerializer to include borrowing details
+        
         if 'borrowed' in self.request.query_params or 'user_borrowed' in self.request.query_params:
-            return BorrowedBookSerializer  # Ensure this is returned correctly
+            return BorrowedBookSerializer  
         return BookSerializer
 
 # Borrow a book

@@ -24,7 +24,7 @@ class UserAdmin(BaseUserAdmin):
             'fields': ('email', 'username', 'password1', 'password2', 'role', 'is_staff', 'is_active')}
         ),
     )
-    # Specify which fields to use for creating a new user
+    
     add_user = ('email', 'username', 'password1', 'password2', 'role')
 
 # Register the new UserAdmin
