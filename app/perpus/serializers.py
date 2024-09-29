@@ -34,7 +34,7 @@ class BookSerializer(serializers.ModelSerializer):
 
 
 class BorrowedBookSerializer(serializers.ModelSerializer):
-    book = serializers.StringRelatedField()
+    book = serializers.StringRelatedField()  # Assuming you want the book name or similar
     deadline_status = serializers.SerializerMethodField()
 
     class Meta:
@@ -42,7 +42,7 @@ class BorrowedBookSerializer(serializers.ModelSerializer):
         fields = ['book', 'borrowed_time', 'return_time', 'actual_return_time', 'deadline_status']
 
     def get_deadline_status(self, obj):
-        # Ensure we compare datetime objects
+        # Ensure return_time is compared with the current time
         if obj.return_time and obj.return_time < timezone.now():
             return "Overdue"
-        return "Within Deadline"
+        return "Within Deadline"    

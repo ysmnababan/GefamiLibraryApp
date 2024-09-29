@@ -41,10 +41,14 @@ class LoginView(APIView):
         return Response({'error': 'Invalid Credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
 # Admin - List all books
-class BookListView(generics.ListAPIView):
-    serializer_class = BookSerializer
-    permission_classes = [IsAuthenticated]
+from rest_framework import generics
+from rest_framework.permissions import IsAuthenticated
+from .models import Book, BorrowedBook
+from .serializers import BookSerializer, BorrowedBookSerializer
 
+class BookListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    
     def get_queryset(self):
         # Get the query parameters from the URL
         query_params = self.request.query_params
@@ -59,19 +63,17 @@ class BookListView(generics.ListAPIView):
         if available is not None:
             queryset = queryset.filter(quantity__gt=0)
 
-        # 2. Filter by borrowed books (books that have been borrowed and not yet returned)
+        # 2. Filter by borrowed books
         if borrowed is not None:
+            # Fetch borrowed books that have not been returned
             borrowed_books = BorrowedBook.objects.filter(actual_return_time__isnull=True)
+            # Get the ids of the books that are borrowed
             book_ids = borrowed_books.values_list('book_id', flat=True)
             queryset = queryset.filter(id__in=book_ids)
 
-            # Add deadline status (whether return deadline exceeded or not)
-            for book in queryset:
-                borrowed_instance = borrowed_books.get(book_id=book.id)
-                if borrowed_instance.return_time < timezone.now():
-                    book.deadline_status = 'Overdue'
-                else:
-                    book.deadline_status = 'Within Deadline'
+            # If you need to include additional info for each borrowed book,
+            # consider serializing BorrowedBook instances instead
+            return borrowed_books  # Return borrowed_books if you want to show their info directly
 
         # 3. Filter by books borrowed by the current user
         if user_borrowed is not None:
@@ -79,6 +81,7 @@ class BookListView(generics.ListAPIView):
                 borrowed_books = BorrowedBook.objects.filter(user=self.request.user, actual_return_time__isnull=True)
                 book_ids = borrowed_books.values_list('book_id', flat=True)
                 queryset = queryset.filter(id__in=book_ids)
+                return borrowed_books
             else:
                 raise PermissionError("Only users can view their own borrowed books.")
 
@@ -87,7 +90,7 @@ class BookListView(generics.ListAPIView):
     def get_serializer_class(self):
         # If 'borrowed' is present, use the BorrowedBookSerializer to include borrowing details
         if 'borrowed' in self.request.query_params or 'user_borrowed' in self.request.query_params:
-            return BorrowedBookSerializer
+            return BorrowedBookSerializer  # Ensure this is returned correctly
         return BookSerializer
 
 # Borrow a book
